@@ -2,7 +2,7 @@
 
 BUILDS=("protoc-all" "protoc" "prototool" "grpc-cli" "gen-grpc-gateway")
 DOCKER_REPO=${DOCKER_REPO}
-NAMESPACE=${NAMESPACE:-vozyco}
+NAMESPACE=${NAMESPACE:-pablogod}
 CONTAINER=${DOCKER_REPO}${NAMESPACE}
 LATEST=${1:false}
 

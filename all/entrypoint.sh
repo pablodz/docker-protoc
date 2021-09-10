@@ -437,6 +437,11 @@ protoc $PROTO_INCLUDE \
     $LINT_STRING \
     ${PROTO_FILES[@]}
 
+PB_GO_FILES=(`find . -name "*.pb.go"`)
+echo ${PB_GO_FILES[-1]}
+protoc-go-inject-tag -input=${PB_GO_FILES[-1]}
+unset 'PB_GO_FILES[-1]'
+
 # Python also needs __init__.py files in each directory to import.
 # If __init__.py files are needed at higher level directories (i.e.
 # directories above $OUT_DIR), it's the caller's responsibility to
@@ -468,3 +473,4 @@ if [ $GEN_GATEWAY = true ]; then
 		    --openapiv2_out=logtostderr=true,json_names_for_fields=false:$GATEWAY_DIR ${PROTO_FILES[@]}
     fi
 fi
+

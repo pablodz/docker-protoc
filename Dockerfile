@@ -18,6 +18,7 @@ ARG grpc_gateway_version
 ARG grpc_java_version
 ARG grpc_web_version
 ARG scala_pb_version
+ARG PROTOC_VERSION=3.3.0
 
 RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -32,6 +33,13 @@ RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     libssl-dev \
     clang
+
+
+# Install protoc
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip -O protoc.zip
+RUN unzip -o protoc.zip -d /usr/local bin/protoc
+RUN unzip -o protoc.zip -d /usr/local 'include/*'
+RUN rm -f protoc.zip
 
 WORKDIR /tmp
 RUN git clone --depth 1 --shallow-submodules -b v$grpc_version.x --recursive https://github.com/grpc/grpc && \ 
@@ -68,39 +76,37 @@ RUN ( cd ./grpc-go/cmd/protoc-gen-go-grpc && go install . )
 
 # Go get go-related bins
 WORKDIR /tmp
-RUN go get -u google.golang.org/grpc
+RUN go get google.golang.org/grpc
 
 # install protoc-gen-grpc-gateway and protoc-gen-openapiv2
 RUN set -e && \
-    GO111MODULE=on go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${grpc_gateway_version} && \
+    GO111MODULE=on go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${grpc_gateway_version} && \
     cd /go/pkg/mod/github.com/grpc-ecosystem/grpc-gateway/v2@v${grpc_gateway_version}/protoc-gen-grpc-gateway && \
     go install .
 
 RUN set -e && \
-    GO111MODULE=on go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v${grpc_gateway_version} && \
+    GO111MODULE=on go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v${grpc_gateway_version} && \
     cd /go/pkg/mod/github.com/grpc-ecosystem/grpc-gateway/v2@v${grpc_gateway_version}/protoc-gen-openapiv2 && \
     go install .
 
-RUN go get -u github.com/gogo/protobuf/protoc-gen-gogo
-RUN go get -u github.com/gogo/protobuf/protoc-gen-gogofast
+RUN go get github.com/gogo/protobuf/protoc-gen-gogo
+RUN go get github.com/gogo/protobuf/protoc-gen-gogofast
 
-RUN go get -u github.com/ckaznocha/protoc-gen-lint
-RUN go get -u github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
+RUN go get github.com/ckaznocha/protoc-gen-lint
+RUN go get github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
 
-RUN go get -u github.com/micro/micro/cmd/protoc-gen-micro
+# RUN go get github.com/micro/micro/cmd/protoc-gen-micro
 
 RUN go get -d github.com/envoyproxy/protoc-gen-validate
-RUN make -C /go/src/github.com/envoyproxy/protoc-gen-validate/ build
+# RUN make -C /go/src/github.com/envoyproxy/protoc-gen-validate/ build
 
-RUN go get -u github.com/mwitkow/go-proto-validators/protoc-gen-govalidators
+RUN go get github.com/mwitkow/go-proto-validators/protoc-gen-govalidators
 
 # Add Ruby Sorbet types support (rbi)
-RUN go get -u github.com/coinbase/protoc-gen-rbi
+RUN go get github.com/coinbase/protoc-gen-rbi
 
-RUN go get github.com/gomatic/renderizer/cmd/renderizer
+# RUN go get github.com/gomatic/renderizer/cmd/renderizer
 
-# Origin protoc-gen-go should be installed last, for not been overwritten by any other binaries(see #210)
-RUN go get -u github.com/golang/protobuf/protoc-gen-go
 
 # Add scala support
 RUN curl -LO https://github.com/scalapb/ScalaPB/releases/download/v${scala_pb_version}/protoc-gen-scala-${scala_pb_version}-linux-x86_64.zip \ 
@@ -111,6 +117,11 @@ RUN curl -LO https://github.com/scalapb/ScalaPB/releases/download/v${scala_pb_ve
 RUN curl -sSL https://github.com/grpc/grpc-web/releases/download/${grpc_web_version}/protoc-gen-grpc-web-${grpc_web_version}-linux-x86_64 \
     -o /tmp/grpc_web_plugin && \
     chmod +x /tmp/grpc_web_plugin
+
+# Origin protoc-gen-go should be installed last, for not been overwritten by any other binaries(see #210)
+RUN go get github.com/golang/protobuf/protoc-gen-go@v1.4.3
+RUN go install github.com/favadi/protoc-go-inject-tag@v1.1.0
+
 
 FROM debian:$debian-slim AS protoc-all
 
@@ -164,8 +175,8 @@ COPY --from=build /tmp/protoc-gen-scala /usr/local/bin/
 
 COPY --from=build /go/pkg/mod/github.com/grpc-ecosystem/grpc-gateway/v2@v${grpc_gateway_version}/protoc-gen-openapiv2/options /opt/include/protoc-gen-openapiv2/options/
 
-COPY --from=build /go/src/github.com/envoyproxy/protoc-gen-validate/ /opt/include/
-COPY --from=build /go/src/github.com/mwitkow/go-proto-validators/ /opt/include/github.com/mwitkow/go-proto-validators/
+# COPY --from=build /go/src/github.com/envoyproxy/protoc-gen-validate/ /opt/include/
+# COPY --from=build /go/src/github.com/mwitkow/go-proto-validators/ /opt/include/github.com/mwitkow/go-proto-validators/
 
 ADD all/entrypoint.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/entrypoint.sh

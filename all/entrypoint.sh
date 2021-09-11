@@ -437,10 +437,13 @@ protoc $PROTO_INCLUDE \
     $LINT_STRING \
     ${PROTO_FILES[@]}
 
-PB_GO_FILES=(`find . -name "*.pb.go"`)
-echo ${PB_GO_FILES[-1]}
-protoc-go-inject-tag -input=${PB_GO_FILES[-1]}
-unset 'PB_GO_FILES[-1]'
+
+if [[ $GEN_LANG == "go" ]]; then
+    PB_GO_FILES=(`find . -name "*.pb.go"`)
+    echo ${PB_GO_FILES[-1]}
+    protoc-go-inject-tag -input=${PB_GO_FILES[-1]}
+    unset 'PB_GO_FILES[-1]'
+fi
 
 # Python also needs __init__.py files in each directory to import.
 # If __init__.py files are needed at higher level directories (i.e.

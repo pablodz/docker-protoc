@@ -181,6 +181,19 @@ COPY --from=build /go/pkg/mod/github.com/grpc-ecosystem/grpc-gateway/v2@v${grpc_
 ADD all/entrypoint.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+RUN apt-get install -y \
+    unzip \
+    wget
+
+ARG PROTOC_VERSION=3.3.0
+
+# Install protoc
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip -O protoc.zip
+RUN unzip -o protoc.zip -d /usr/local bin/protoc
+RUN unzip -o protoc.zip -d /usr/local 'include/*'
+RUN rm -f protoc.zip
+
+
 WORKDIR /defs
 ENTRYPOINT [ "entrypoint.sh" ]
 

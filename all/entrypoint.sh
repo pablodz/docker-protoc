@@ -439,7 +439,7 @@ protoc $PROTO_INCLUDE \
 
 
 if [[ $GEN_LANG == "go" ]]; then
-    find . -name "*.pb.go" >> temporalfile && xargs -a allfiles -I {} protoc-go-inject-tag -input={}  && rm temporalfile
+    find . -name "*.pb.go" >> temporalfile && xargs -a temporalfile -I {} protoc-go-inject-tag -input={}  && rm temporalfile
 fi
 
 # Python also needs __init__.py files in each directory to import.
